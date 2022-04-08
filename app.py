@@ -46,7 +46,7 @@ def extract_auth_token(authenticated_request):
 
 def decode_token(token):
     payload = jwt.decode(token, SECRET_KEY, 'HS256')
-    return payload['sub']
+    return payload
 
 
 @app.route('/hello', methods=['GET'])
@@ -88,5 +88,24 @@ def auth():
         abort(403)
 
     tok = create_token(user_id)
+    username = user.user_name
+    username_initial = username[0].upper()
 
-    return jsonify(token=tok, user_name=user.user_name, balance=user.balance)
+    payload = decode_token(tok)
+
+    return jsonify(token=tok, user_name=username, user_initial=username_initial, balance=user.balance,
+                   payload_id=payload['sub'])
+
+
+@app.route("/credentials", methods=["POST"])
+def credentials():
+    tok = request.json["token"]
+    payload = decode_token(tok)
+    user = User.query.filter_by(user_id=payload['sub']).first()
+
+    user_id = payload['sub']
+    username = user.user_name
+    username_initial = username[0].upper()
+    userbalance = user.balance
+
+    return jsonify(user_id=user_id, user_name=username, user_initial=username_initial, balance=userbalance)
