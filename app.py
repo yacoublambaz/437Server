@@ -54,24 +54,30 @@ def hello_world():
     return "Hello World!"
 
 
-@app.route("/signUp", methods=["POST"])
+@app.route("/signUp", methods=['POST'])
 def signUp():
-    username = request.json["user_name"]
+    user_id = request.json["user_id"]
+    user_name = request.json["user_name"]
+    user_email = request.json["email"]
     password = request.json["password"]
-    newUser = User(username, password)
-    db.session.add(newUser)
+    balance = 0
+    image = ""
+    new_user = User(user_id, user_name, user_email, password, balance)
+
+    db.session.add(new_user)
     db.session.commit()
-    return jsonify(user_schema.dump(newUser))
+
+    return jsonify(user_schema.dump(new_user))
 
 
 @app.route("/authentication", methods=["POST"])
 def auth():
-    username = request.json["user_name"]
+    user_id = request.json["user_id"]
     password = request.json["password"]
-    if not username and not password:
+    if not user_id and not password:
         abort(400)
 
-    user = User.query.filter_by(user_name=username).first()
+    user = User.query.filter_by(user_id=user_id).first()
 
     if user is None:
         abort(403)
@@ -81,6 +87,6 @@ def auth():
     if not passMatch:
         abort(403)
 
-    tok = create_token(user.id)
-    return jsonify(token=tok)
+    tok = create_token(user_id)
 
+    return jsonify(token=tok, user_name=user.user_name, balance=user.balance)
